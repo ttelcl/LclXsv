@@ -11,9 +11,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XsvLib", "XsvLib\XsvLib.csproj", "{E6573807-D3DA-4FA7-AED2-6CDEA80CE664}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{2D2D21A8-98D7-4FC0-9E87-8AA89AA9ADF0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTesting", "UnitTesting", "{D56DABF8-0B5B-4CF2-9342-0D4BE9EF2DAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests.XsvLib", "UnitTests.XsvLib\UnitTests.XsvLib.csproj", "{14390FF2-7D65-4E0A-B8D1-B0987C556A64}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E6573807-D3DA-4FA7-AED2-6CDEA80CE664}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6573807-D3DA-4FA7-AED2-6CDEA80CE664}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6573807-D3DA-4FA7-AED2-6CDEA80CE664}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6573807-D3DA-4FA7-AED2-6CDEA80CE664}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14390FF2-7D65-4E0A-B8D1-B0987C556A64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14390FF2-7D65-4E0A-B8D1-B0987C556A64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14390FF2-7D65-4E0A-B8D1-B0987C556A64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14390FF2-7D65-4E0A-B8D1-B0987C556A64}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E6573807-D3DA-4FA7-AED2-6CDEA80CE664} = {2D2D21A8-98D7-4FC0-9E87-8AA89AA9ADF0}
+		{14390FF2-7D65-4E0A-B8D1-B0987C556A64} = {D56DABF8-0B5B-4CF2-9342-0D4BE9EF2DAD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A7010A3-B290-49AA-8CF2-E20C78AF2CE6}
