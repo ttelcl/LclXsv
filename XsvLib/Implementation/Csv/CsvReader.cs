@@ -13,24 +13,31 @@ using System.Threading.Tasks;
 namespace XsvLib.Implementation.Csv
 {
   /// <summary>
-  /// Composes a TextReader and a CsvParser. Does not "own" the TextReader; the caller
-  /// is responsible for closing it.
+  /// Wraps a CsvParser and a source of text lines.
+  /// Does not "own" the line source; the caller is responsible for closing it.
   /// </summary>
   public class CsvReader: ITextRecordReader
   {
-    private readonly TextReader _reader;
+    private readonly ILinesReader _reader;
     private char _separator;
 
     /// <summary>
     /// Create a new CsvReader.
     /// </summary>
-    public CsvReader(TextReader reader, bool skipEmptyLines, char separator = ',')
+    public CsvReader(ILinesReader reader, char separator = ',')
     {
       _reader = reader;
       _separator = separator;
-      SkipEmptyLines = skipEmptyLines;
       TrimSpaces = true;
       ParserState.TestValidSeparator(separator);
+    }
+
+    /// <summary>
+    /// Create a new CsvReader.
+    /// </summary>
+    public CsvReader(TextReader reader, bool skipEmptyLines, char separator = ',')
+      : this(reader.LinesFromTextReader(skipEmptyLines), separator)
+    {
     }
 
     /// <summary>
@@ -58,26 +65,7 @@ namespace XsvLib.Implementation.Csv
     /// </summary>
     public IEnumerable<IReadOnlyList<string>> ReadRecords()
     {
-      return CsvParser.ParseLines(ReadLines(), _separator);
-    }
-
-    /// <summary>
-    /// Read all lines
-    /// </summary>
-    internal IEnumerable<string> ReadLines()
-    {
-      while(true)
-      {
-        var line = _reader.ReadLine();
-        if(line == null)
-        {
-          yield break;
-        }
-        if(line.Length > 0 || !SkipEmptyLines)
-        {
-          yield return line;
-        }
-      }
+      return CsvParser.ParseLines(_reader.ReadLines(), _separator);
     }
 
   }

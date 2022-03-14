@@ -5,9 +5,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using XsvLib.Implementation;
 
 namespace XsvLib
 {
@@ -35,6 +38,14 @@ namespace XsvLib
         records = records.Select(row => row.ToArray());
       }
       return records.ToList();
+    }
+
+    /// <summary>
+    /// Wrap a TextReader as an object implementing ILinesReader
+    /// </summary>
+    public static ILinesReader LinesFromTextReader(this TextReader tr, bool skipEmptyLines)
+    {
+      return new StreamLinesReader(tr, skipEmptyLines);
     }
   }
 }
