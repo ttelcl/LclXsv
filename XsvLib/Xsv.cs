@@ -46,15 +46,15 @@ namespace XsvLib
     /// <exception cref="NotSupportedException">
     /// Thrown when the file extension is not recognized.
     /// </exception>
-    public static IDisposableTextRecordReader OpenXsv(
+    public static IDisposableTextRecordReader ReadXsv(
       TextReader reader, string formatname, bool skipEmptyLines = true, bool leaveOpen = false)
     {
       switch(XsvFormat.XsvFromFilename(formatname))
       {
         case XsvFormat.Csv:
-          return OpenCsv(reader, skipEmptyLines, separator: ',', leaveOpen: leaveOpen);
+          return ReadCsv(reader, skipEmptyLines, separator: ',', leaveOpen: leaveOpen);
         case XsvFormat.Tsv:
-          return OpenTsv(reader, skipEmptyLines, leaveOpen: leaveOpen);
+          return ReadTsv(reader, skipEmptyLines, leaveOpen: leaveOpen);
         default:
           throw new NotSupportedException($"Unsupported file format: {formatname}");
       }
@@ -72,11 +72,11 @@ namespace XsvLib
     /// <returns>
     /// An object implementing ITextRecordReader and IDisposable
     /// </returns>
-    public static IDisposableTextRecordReader OpenXsv(
+    public static IDisposableTextRecordReader ReadXsv(
       string filename, bool skipEmptyLines = true)
     {
       var reader = File.OpenText(filename);
-      return OpenXsv(reader, filename, skipEmptyLines, leaveOpen: false);
+      return ReadXsv(reader, filename, skipEmptyLines, leaveOpen: false);
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ namespace XsvLib
     /// <returns>
     /// An object implementing both IDisposable and ITextRecordReader
     /// </returns>
-    public static IDisposableTextRecordReader OpenCsv(
+    public static IDisposableTextRecordReader ReadCsv(
       TextReader tr, bool skipEmptyLines = true, char separator = ',', bool leaveOpen = false)
     {
       return leaveOpen
@@ -124,11 +124,11 @@ namespace XsvLib
     /// <returns>
     /// An object implementing both IDisposable and ITextRecordReader
     /// </returns>
-    public static IDisposableTextRecordReader OpenCsv(
+    public static IDisposableTextRecordReader ReadCsv(
       string filename, bool skipEmptyLines = true, char separator = ',')
     {
       var reader = File.OpenText(filename);
-      return OpenCsv(reader, skipEmptyLines, separator, false);
+      return ReadCsv(reader, skipEmptyLines, separator, false);
     }
 
     /// <summary>
@@ -148,7 +148,7 @@ namespace XsvLib
     /// <returns>
     /// An object implementing both IDisposable and ITextRecordReader
     /// </returns>
-    public static IDisposableTextRecordReader OpenTsv(
+    public static IDisposableTextRecordReader ReadTsv(
       TextReader tr, bool skipEmptyLines = true, bool leaveOpen = false)
     {
       return leaveOpen
@@ -159,10 +159,10 @@ namespace XsvLib
     /// <summary>
     /// Open the file as TSV data file
     /// </summary>
-    public static IDisposableTextRecordReader OpenTsv(
+    public static IDisposableTextRecordReader ReadTsv(
       string filename, bool skipEmptylines = true)
     {
-      return OpenTsv(File.OpenText(filename), skipEmptylines);
+      return ReadTsv(File.OpenText(filename), skipEmptylines);
     }
 
     /// <summary>
@@ -172,6 +172,48 @@ namespace XsvLib
     {
       return new DelegateTextRecordReader(
         () => CsvParser.ParseLines(lines, separator));
+    }
+
+    /// <summary>
+    /// Create an ITextRecordWriter instance for writing CSV.
+    /// </summary>
+    /// <param name="writer">
+    /// The TextWriter to write to. Remember to close it after you finish writing the data
+    /// (ITextRecordWriter does not do that)
+    /// </param>
+    /// <param name="fieldCount">
+    /// The number of columns to be written, or 0 (default) to not verify column counts
+    /// </param>
+    /// <param name="separator">
+    /// The separator character to use (default ',')
+    /// </param>
+    /// <returns>
+    /// An object implementing ITextRecordWriter
+    /// </returns>
+    public static ITextRecordWriter WriteCsv(TextWriter writer, int fieldCount = 0, char separator = ',')
+    {
+      return new CsvWriter(writer, fieldCount, separator);
+    }
+
+    /// <summary>
+    /// Create an ITextRecordWriter instance for writing CSV to the given file
+    /// </summary>
+    /// <param name="filename">
+    /// The name of the file to write to
+    /// </param>
+    /// <param name="fieldCount">
+    /// The number of columns in the file, or 0 (default) to not verify column counts
+    /// </param>
+    /// <param name="separator">
+    /// The separator character to use (default ',')
+    /// </param>
+    /// <returns>
+    /// An object implementing both ITextRecordWriter and IDisposable
+    /// </returns>
+    public static IDisposableTextRecordWriter WriteCsv(string filename, int fieldCount = 0, char separator = ',')
+    {
+      var writer = File.CreateText(filename);
+      return new TextRecordWriterWrapper(WriteCsv(writer, fieldCount, separator), writer);
     }
 
   }

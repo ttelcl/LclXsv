@@ -47,5 +47,27 @@ namespace XsvLib
     {
       return new StreamLinesReader(tr, skipEmptyLines);
     }
+
+    /// <summary>
+    /// Write a full line of fields
+    /// </summary>
+    public static void WriteLine(this ITextRecordWriter itrw, IEnumerable<string> fields)
+    {
+      itrw.StartLine();
+      itrw.WriteFields(fields);
+      itrw.FinishLine();
+    }
+
+    /// <summary>
+    /// Write multiple fields (possibly as part of a larger line)
+    /// </summary>
+    public static void WriteFields(this ITextRecordWriter itrw, IEnumerable<string> fields)
+    {
+      foreach(var field in fields)
+      {
+        itrw.WriteField(field);
+      }
+    }
+
   }
 }
