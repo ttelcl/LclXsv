@@ -69,5 +69,34 @@ namespace UnitTests.XsvLib
       Assert.Equal("3", records[1][2]);
     }
 
+    [Fact]
+    public void CanParseCsvWithHeaderViaXsvReader()
+    {
+      var csv1 =
+        new[] {
+          "foo,bar, baz",
+          "1,2,3",
+          "4,5,6",
+        };
+      using(var xsv = new XsvReader(Xsv.ParseCsv(csv1)))
+      {
+        Assert.NotNull(xsv.Header);
+        var records = xsv.LoadAll(true);
+
+        Assert.Equal(3, xsv.Header.Count);
+        Assert.Equal("foo", xsv.Header[0]);
+        Assert.Equal("bar", xsv.Header[1]);
+        Assert.Equal("baz", xsv.Header[2]);
+
+        Assert.Equal(2, records.Count);
+        Assert.Equal("1", records[0][0]);
+        Assert.Equal("2", records[0][1]);
+        Assert.Equal("3", records[0][2]);
+        Assert.Equal("4", records[1][0]);
+        Assert.Equal("5", records[1][1]);
+        Assert.Equal("6", records[1][2]);
+      }
+    }
+
   }
 }
