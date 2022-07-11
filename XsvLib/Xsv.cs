@@ -31,7 +31,7 @@ namespace XsvLib
     /// The name of the file (or pseudo-file), whose file extension determines
     /// the format the file is in. Supported formats include .csv and .tsv.
     /// This argument is only used to determine the data format and doesn't need
-    /// to be a valiud file name, only to have a valid file extension.
+    /// to be a valid file name, only to have a valid file extension.
     /// </param>
     /// <param name="skipEmptyLines">
     /// Whether or not to skip empty lines. Default true.
@@ -44,12 +44,12 @@ namespace XsvLib
     /// An object implementing both IDisposable and ITextRecordReader
     /// </returns>
     /// <exception cref="NotSupportedException">
-    /// Thrown when the file extension is not recognized.
+    /// Thrown if the file extension is not recognized.
     /// </exception>
     public static IDisposableTextRecordReader ReadXsv(
       TextReader reader, string formatname, bool skipEmptyLines = true, bool leaveOpen = false)
     {
-      switch(XsvFormat.XsvFromFilename(formatname))
+      switch(XsvFormat.XsvFromFilename(formatname, false))
       {
         case XsvFormat.Csv:
           return ReadCsv(reader, skipEmptyLines, separator: ',', leaveOpen: leaveOpen);
@@ -77,6 +77,72 @@ namespace XsvLib
     {
       var reader = File.OpenText(filename);
       return ReadXsv(reader, filename, skipEmptyLines, leaveOpen: false);
+    }
+
+    /// <summary>
+    /// Wrap a TextWriter in in ITextRecordWriter implementation for writing to
+    /// one of the supported XSV formats (CSV or TSV).
+    /// </summary>
+    /// <param name="writer">
+    /// The TextWriter to wrap. The lifetime of that TextWriter is the caller's 
+    /// responsibility.
+    /// </param>
+    /// <param name="formatname">
+    /// The pseudo-filename to derive the format from. Only the file extension matters.
+    /// In addition to the standard format names (*.csv, *.tsv) also the extensions with
+    /// an additional ".tmp" are recognized (*.csv.tmp, *.tsv.tmp)
+    /// </param>
+    /// <param name="fieldCount">
+    /// If not 0: the number of fields expected in each row. If 0 (default) no
+    /// field count check is performed.
+    /// </param>
+    /// <returns>
+    /// An ITextRecordWriter implementation
+    /// </returns>
+    /// <exception cref="NotSupportedException">
+    /// Thrown if the file extension is not recognized.
+    /// </exception>
+    public static ITextRecordWriter WriteXsv(
+      TextWriter writer, string formatname, int fieldCount=0)
+    {
+      switch(XsvFormat.XsvFromFilename(formatname, true))
+      {
+        case XsvFormat.Csv:
+          return WriteCsv(writer, fieldCount);
+        case XsvFormat.Tsv:
+          return WriteTsv(writer, fieldCount);
+        default:
+          throw new NotSupportedException($"Unsupported file format: {formatname}");
+      }
+    }
+
+    /// <summary>
+    /// Create a new file for writing a supported XSV format (CSV or TSV)
+    /// </summary>
+    /// <param name="filename">
+    /// The name of the file, with a supported file extension, or a supported file extension
+    /// plus an additional ".tmp".
+    /// </param>
+    /// <param name="fieldCount">
+    /// If not 0: the number of fields expected in each row. If 0 (default) no
+    /// field count check is performed.
+    /// </param>
+    /// <returns></returns>
+    /// <exception cref="NotSupportedException">
+    /// Thrown if the file extension is not recognized.
+    /// </exception>
+    public static IDisposableTextRecordWriter WriteXsv(
+      string filename, int fieldCount = 0)
+    {
+      switch(XsvFormat.XsvFromFilename(filename, true))
+      {
+        case XsvFormat.Csv:
+          return WriteCsv(filename, fieldCount);
+        case XsvFormat.Tsv:
+          return WriteTsv(filename, fieldCount);
+        default:
+          throw new NotSupportedException($"Unsupported file format: '{filename}");
+      }
     }
 
     /// <summary>
@@ -216,6 +282,41 @@ namespace XsvLib
       return new TextRecordWriterWrapper(WriteCsv(writer, fieldCount, separator), writer);
     }
 
+    /// <summary>
+    /// Create an ITextRecordWriter instance for writing TSV.
+    /// </summary>
+    /// <param name="writer">
+    /// The TextWriter to write to. Remember to close it after you finish writing the data
+    /// (ITextRecordWriter does not do that)
+    /// </param>
+    /// <param name="fieldCount">
+    /// The number of columns to be written, or 0 (default) to not verify column counts
+    /// </param>
+    /// <returns>
+    /// An object implementing ITextRecordWriter
+    /// </returns>
+    public static ITextRecordWriter WriteTsv(TextWriter writer, int fieldCount = 0)
+    {
+      return new TsvWriter(writer, fieldCount);
+    }
+
+    /// <summary>
+    /// Create an ITextRecordWriter instance for writing TSV to the given file
+    /// </summary>
+    /// <param name="filename">
+    /// The name of the file to write to
+    /// </param>
+    /// <param name="fieldCount">
+    /// The number of columns in the file, or 0 (default) to not verify column counts
+    /// </param>
+    /// <returns>
+    /// An object implementing both ITextRecordWriter and IDisposable
+    /// </returns>
+    public static IDisposableTextRecordWriter WriteTsv(string filename, int fieldCount = 0)
+    {
+      var writer = File.CreateText(filename);
+      return new TextRecordWriterWrapper(WriteTsv(writer, fieldCount), writer);
+    }
   }
 
 }

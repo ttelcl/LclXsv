@@ -33,16 +33,24 @@ namespace XsvLib
     /// <param name="filename">
     /// The file name or partial file name to determine the format of.
     /// It is sufficient if this contains just the file extension (including
-    /// the leading '.')
+    /// the leading '.').
+    /// </param>
+    /// <param name="supportTmp">
+    /// Default false. If true, also file extensions with an additional
+    /// ".tmp" are recognized ("*.csv.tmp", "*.tsv.tmp")
     /// </param>
     /// <returns>
     /// The determined format constant, or null if not recognized.
     /// </returns>
-    public static string? XsvFromFilename(string filename)
+    public static string? XsvFromFilename(string filename, bool supportTmp = false)
     {
       foreach(var format in new[] { Csv, Tsv, })
       {
         if(filename.EndsWith(format, StringComparison.OrdinalIgnoreCase))
+        {
+          return format;
+        }
+        if(supportTmp && filename.EndsWith(format + ".tmp", StringComparison.OrdinalIgnoreCase))
         {
           return format;
         }
