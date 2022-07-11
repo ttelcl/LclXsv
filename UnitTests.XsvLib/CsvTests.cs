@@ -54,7 +54,7 @@ namespace UnitTests.XsvLib
           "1,2 ,3",
         };
       
-      var itrr = Xsv.ParseCsv(csv1, separator: ',');
+      var itrr = Csv.ParseCsv(csv1, separator: ',');
 
       var records = itrr.LoadAll(true);
 
@@ -78,7 +78,7 @@ namespace UnitTests.XsvLib
           "1,2,3",
           "4,5,6",
         };
-      using(var xsv = new XsvReader(Xsv.ParseCsv(csv1)))
+      using(var xsv = new XsvReader(Csv.ParseCsv(csv1)))
       {
         Assert.NotNull(xsv.Header);
         var records = xsv.LoadAll(true);
