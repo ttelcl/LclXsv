@@ -24,12 +24,23 @@ namespace XsvLib
     /// <summary>
     /// Create a new XsvReader and read the header line from the source
     /// </summary>
+    /// <param name="itrr">
+    /// The ITextRecordReader instance to wrap. The implementation may
+    /// also implement IDisposable, in which case this XsvReader can take
+    /// ownership of it depending on the 'leaveOpen' flag.
+    /// </param>
+    /// <param name="leaveOpen">
+    /// When false (default), disposing this XsvReader also disposes the
+    /// wrapped ITextRecordReader if it implements IDisposable.
+    /// When true, the caller is responsible for disposing the wrapped
+    /// reader's resources.
+    /// </param>
     public XsvReader(
       ITextRecordReader itrr,
-      bool ownsReader = true)
+      bool leaveOpen = false)
     {
       _reader = itrr;
-      OwnsReader = ownsReader;
+      LeaveOpen = leaveOpen;
       Sequencer = new Subsequencer<IReadOnlyList<string>>(itrr.ReadRecords());
       Header = Sequencer.Next().ToList().AsReadOnly();
     }
@@ -56,11 +67,11 @@ namespace XsvLib
     public Subsequencer<IReadOnlyList<string>> Sequencer { get; }
     
     /// <summary>
-    /// True if this XsvReader "owns" the wrapped ITextRecordReader.
+    /// False if this XsvReader "owns" the wrapped ITextRecordReader.
     /// In that case Disposing this XsvReader also disposes the TextRecordReader
-    /// if it supports IDisposable
+    /// if it supports IDisposable.
     /// </summary>
-    public bool OwnsReader { get; }
+    public bool LeaveOpen { get; }
 
     /// <summary>
     /// Clean up
@@ -71,7 +82,7 @@ namespace XsvLib
       {
         _disposed = true;
         Sequencer.Dispose();
-        if(OwnsReader && _reader is IDisposable disp)
+        if(!LeaveOpen && _reader is IDisposable disp)
         {
           disp.Dispose();
         }
