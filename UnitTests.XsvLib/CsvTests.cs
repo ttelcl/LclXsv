@@ -87,7 +87,8 @@ namespace UnitTests.XsvLib
           "1,2,3",
           "4,5,6",
         };
-      using(var xsv = new XsvReader(Csv.ParseCsv(csv1)))
+      // var xsv = new XsvReader(Csv.ParseCsv(csv1))
+      using(var xsv = Csv.ParseCsv(csv1).AsXsvReader())
       {
         Assert.NotNull(xsv.Header);
         var records = xsv.LoadAll(true);

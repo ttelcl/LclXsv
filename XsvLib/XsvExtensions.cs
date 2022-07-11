@@ -69,5 +69,22 @@ namespace XsvLib
       }
     }
 
+    /// <summary>
+    /// Wrap the ITextRecordReader as an XsvReader (and peel off the header line)
+    /// </summary>
+    /// <param name="itrr">
+    /// The ITextRecordReader to wrap
+    /// </param>
+    /// <param name="leaveOpen">
+    /// False (default) to have XsvReader close the wrapped ITextRecordReader upon disposal
+    /// (if it supports IDisposable). True to leave it open.
+    /// </param>
+    /// <returns>
+    /// A new XsvReader
+    /// </returns>
+    public static XsvReader AsXsvReader(this ITextRecordReader itrr, bool leaveOpen=false)
+    {
+      return new XsvReader(itrr, leaveOpen);
+    }
   }
 }
