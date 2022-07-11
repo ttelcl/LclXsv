@@ -31,6 +31,7 @@ namespace XsvLib.Tables
     /// </summary>
     protected XsvRow()
     {
+      HasData = false;
     }
 
     /// <summary>
@@ -45,11 +46,13 @@ namespace XsvLib.Tables
 
     /// <summary>
     /// Change the value of CurrentRow. Subclasses can override this
-    /// to perform additional updates
+    /// to perform additional updates. The default implementation
+    /// changes HasData based on whether or not the buffer is null.
     /// </summary>
     public virtual void SetRow(TRowBuffer? buffer)
     {
       CurrentRow = buffer;
+      HasData = buffer is not null;
     }
 
     /// <summary>

@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using XsvLib.Implementation;
+using XsvLib.Tables;
+using XsvLib.Tables.Cursor;
 
 namespace XsvLib
 {
@@ -85,6 +87,62 @@ namespace XsvLib
     public static XsvReader AsXsvReader(this ITextRecordReader itrr, bool leaveOpen=false)
     {
       return new XsvReader(itrr, leaveOpen);
+    }
+
+    /// <summary>
+    /// Repeatedly bind each raw row to the given XsvRow subclass instance, returning that
+    /// same instance on each iteration.
+    /// </summary>
+    /// <typeparam name="TRow">
+    /// The XsvRow subclass to bind the raw rows to. The row buffer type must be 
+    /// IReadOnlyList{string}
+    /// </typeparam>
+    /// <typeparam name="TCol">
+    /// The column type used by the XsvRow subclass
+    /// </typeparam>
+    /// <typeparam name="TBuf">
+    /// The raw row buffer type (normally IReadOnlyList{string})
+    /// </typeparam>
+    /// <param name="rawrows">
+    /// The input rows
+    /// </param>
+    /// <param name="rowcursor"></param>
+    /// <returns>
+    /// A sequence returning the rowcursor argument repeatedly, once for each raw row.
+    /// </returns>
+    public static IEnumerable<TRow> PlayRows<TRow, TCol, TBuf>(
+      this IEnumerable<TBuf> rawrows,
+      TRow rowcursor)
+      where TRow : XsvRow<TCol, TBuf> 
+      where TCol : XsvColumn
+      where TBuf: class
+    {
+      foreach(var rawrow in rawrows)
+      {
+        rowcursor.SetRow(rawrow);
+        yield return rowcursor;
+      }
+      rowcursor.SetRow(null);
+    }
+
+    /// <summary>
+    /// Repeatedly bind each raw row to the given XsvCursor, returning that
+    /// same XsvCursor instance on each iteration.
+    /// </summary>
+    /// <param name="rawrows">
+    /// The raw input rows
+    /// </param>
+    /// <param name="cursor">
+    /// The cursor object that will be bound to each raw input row
+    /// </param>
+    /// <returns>
+    /// The same cursor object repeated, bound once to each raw row.
+    /// </returns>
+    public static IEnumerable<XsvCursor> PlayRows(
+      this IEnumerable<IReadOnlyList<string>> rawrows,
+      XsvCursor cursor)
+    {
+      return rawrows.PlayRows<XsvCursor, MappedColumn, IReadOnlyList<string>>(cursor);
     }
   }
 }

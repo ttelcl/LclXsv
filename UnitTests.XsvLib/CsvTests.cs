@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 using XsvLib;
 using XsvLib.Implementation;
 using XsvLib.Implementation.Csv;
+using XsvLib.Tables.Cursor;
 
 namespace UnitTests.XsvLib
 {
@@ -106,6 +107,39 @@ namespace UnitTests.XsvLib
         Assert.Equal("5", records[1][1]);
         Assert.Equal("6", records[1][2]);
       }
+    }
+
+    [Fact]
+    public void ColumnMappingTest()
+    {
+      var cm = new ColumnMap();
+
+      var c1 = cm.Declare("c");
+      var c2 = cm.Declare("e");
+      var c3 = cm.Declare("g");
+      var c4 = cm.Declare("a");
+      var c5 = cm.Declare("b");
+
+      var r = cm.BindColumns(new[] { "b", "c", "d", "e" });
+
+      Assert.False(r);
+      var unbound = cm.UnboundColumns().ToList();
+      var unboundNames = unbound.Select(c => c.Name).ToList();
+
+      Assert.Equal(2, unbound.Count);
+      Assert.Contains("a", unboundNames);
+      Assert.Contains("g", unboundNames);
+
+      Assert.Equal(1, c1.Index);
+      Assert.Equal(3, c2.Index);
+      Assert.Equal(-1, c3.Index);
+      Assert.Equal(-1, c4.Index);
+      Assert.Equal(0, c5.Index);
+
+      var all = cm.AllColumns(true);
+      Assert.Equal(5, all.Count);
+
+      Assert.Equal(new[] { "a", "g", "b", "c", "e" }, all.Select(c => c.Name));
     }
 
   }
