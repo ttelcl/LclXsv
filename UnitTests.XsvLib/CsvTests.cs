@@ -27,6 +27,7 @@ namespace UnitTests.XsvLib
         new[] {
           "foo,bar, baz",
           "1,2 ,3",
+          "\"hello, world!\",\"hello\",\"\"\"world\"\"\""
         };
 
       var records =
@@ -34,15 +35,23 @@ namespace UnitTests.XsvLib
         .Select(row => row.ToArray()) // also support a volatile implementation, just in case
         .ToList();
 
-      Assert.Equal(2, records.Count);
+      Assert.Equal(3, records.Count);
       Assert.Equal(3, records[0].Length);
       Assert.Equal(3, records[1].Length);
+      Assert.Equal(3, records[2].Length);
+
       Assert.Equal("foo", records[0][0]);
       Assert.Equal("bar", records[0][1]);
       Assert.Equal("baz", records[0][2]); // note: leading space trimmed
+
       Assert.Equal("1", records[1][0]);
       Assert.Equal("2", records[1][1]); // note: trailing space trimmed
       Assert.Equal("3", records[1][2]);
+
+      Assert.Equal("hello, world!", records[2][0]); // Embedded comma in content
+      Assert.Equal("hello", records[2][1]); // Superfluous quotes removed
+      Assert.Equal("\"world\"", records[2][2]); // Embedded quotes in content via quote doubling
+
     }
 
     [Fact]
