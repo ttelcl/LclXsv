@@ -9,13 +9,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XsvLib.Tables.Cursor
+using XsvLib.Tables;
+
+namespace XsvLib
 {
   /// <summary>
   /// Describes a column with a specific name that can be mapped
   /// to a specific column index. 
   /// </summary>
-  public class MappedColumn : XsvColumn
+  public class MappedColumn: XsvColumn
   {
     /// <summary>
     /// Create a new MappedColumn. This is called indirectly by the

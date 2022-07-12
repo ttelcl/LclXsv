@@ -147,5 +147,47 @@ namespace UnitTests.XsvLib
       Assert.True(r2);
     }
 
+    [Fact]
+    public void CanUseStandardXsvReader()
+    {
+      var datafile = "sample1.csv";
+      Assert.True(File.Exists(datafile));
+      var columns = new ColumnMap();
+      var fooColumn = columns.Declare("foo");
+      var barColumn = columns.Declare("bar");
+      var bazColumn = columns.Declare("baz");
+
+      var n = 0;
+      using(var xr = Xsv.ReadXsv(datafile).AsXsvReader())
+      {
+        foreach(var cursor in xr.ReadCursor(columns))
+        {
+          Assert.True(n<3);
+          switch(n)
+          {
+            case 0:
+              Assert.Equal("0", cursor[fooColumn]);
+              Assert.Equal("zero", cursor[barColumn]);
+              Assert.Equal("nothing", cursor[bazColumn]);
+              break;
+            case 1:
+              Assert.Equal("1", cursor[fooColumn]);
+              Assert.Equal("one", cursor[barColumn]);
+              Assert.Equal("something", cursor[bazColumn]);
+              break;
+            case 2:
+              Assert.Equal("2", cursor[fooColumn]);
+              Assert.Equal("two", cursor[barColumn]);
+              Assert.Equal("many", cursor[bazColumn]);
+              break;
+            default:
+              throw new InvalidOperationException("Unexpected state");
+          }
+          n++;
+        }
+        Assert.Equal(3, n);
+      }
+    }
+
   }
 }

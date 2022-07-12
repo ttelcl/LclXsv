@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XsvLib.Tables.Cursor
+namespace XsvLib
 {
   /// <summary>
   /// Manages a group of MappedColumn instances with unique names

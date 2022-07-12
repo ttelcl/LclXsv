@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using XsvLib.Tables.Cursor;
 using XsvLib.Utilities;
 
 namespace XsvLib
@@ -66,6 +67,42 @@ namespace XsvLib
     /// </summary>
     public Subsequencer<IReadOnlyList<string>> Sequencer { get; }
     
+    /// <summary>
+    /// Bind this XsvReader's Header to the ColumnMap and iterate all data rows,
+    /// returning an XsvCursor for each data row. The same XsvCursor instance 
+    /// (bound to a different raw row) is returned for each iteration.
+    /// </summary>
+    /// <param name="columnMap">
+    /// The ColumnMap that declares the columns you are interested in. Each
+    /// MappedColumn that you declared in this ColumnMap is a valid index for
+    /// the returned XsvCursor.
+    /// </param>
+    /// <returns>
+    /// An iteration that returns the same XsvCursor on each iteration, bound
+    /// to each raw data row
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when any columns declared in the ColumnMap are missing from the data.
+    /// Also thrown when no columns are declared in the ColumnMap
+    /// </exception>
+    public IEnumerable<XsvCursor> ReadCursor(ColumnMap columnMap)
+    {
+      var cursor = new XsvCursor();
+      var ok = columnMap.BindColumns(Header);
+      if(!ok)
+      {
+        var missing = String.Join(", ", columnMap.UnboundColumns());
+        throw new InvalidOperationException(
+          $"The following column(s) were expected but are missing from the input: {missing}");
+      }
+      foreach(var rawrow in ReadRecords())
+      {
+        cursor.SetRow(rawrow);
+        yield return cursor;
+      }
+      cursor.SetRow(null);
+    }
+
     /// <summary>
     /// False if this XsvReader "owns" the wrapped ITextRecordReader.
     /// In that case Disposing this XsvReader also disposes the TextRecordReader
