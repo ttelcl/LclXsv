@@ -72,6 +72,22 @@ namespace XsvLib
     }
 
     /// <summary>
+    /// Write (Emit) the current row in the buffer and reset it.
+    /// </summary>
+    public static void WriteBuffer(this ITextRecordWriter itrw, XsvOutBuffer buffer)
+    {
+      buffer.Emit(itrw);
+    }
+
+    /// <summary>
+    /// Write (Emit) the header of the buffer.
+    /// </summary>
+    public static void WriteHeader(this ITextRecordWriter itrw, XsvOutBuffer buffer)
+    {
+      buffer.EmitHeader(itrw);
+    }
+
+    /// <summary>
     /// Wrap the ITextRecordReader as an XsvReader (and peel off the header line)
     /// </summary>
     /// <param name="itrr">

@@ -152,6 +152,7 @@ namespace UnitTests.XsvLib
     {
       var datafile = "sample1.csv";
       Assert.True(File.Exists(datafile));
+
       var columns = new ColumnMap();
       var fooColumn = columns.Declare("foo");
       var barColumn = columns.Declare("bar");
@@ -187,6 +188,94 @@ namespace UnitTests.XsvLib
         }
         Assert.Equal(3, n);
       }
+    }
+
+    [Fact]
+    public void CanUseStandardXsvReader2()
+    {
+      var datafile = "sample1.csv";
+      Assert.True(File.Exists(datafile));
+
+      var columns = new ColumnMap();
+      var fooColumn = columns.Declare("foo");
+      var barColumn = columns.Declare("bar");
+      var bazColumn = columns.Declare("baz");
+
+      var n = 0;
+      foreach(var cursor in Xsv.ReadXsvCursor(datafile, columns))
+      {
+        Assert.True(n<3);
+        switch(n)
+        {
+          case 0:
+            Assert.Equal("0", cursor[fooColumn]);
+            Assert.Equal("zero", cursor[barColumn]);
+            Assert.Equal("nothing", cursor[bazColumn]);
+            break;
+          case 1:
+            Assert.Equal("1", cursor[fooColumn]);
+            Assert.Equal("one", cursor[barColumn]);
+            Assert.Equal("something", cursor[bazColumn]);
+            break;
+          case 2:
+            Assert.Equal("2", cursor[fooColumn]);
+            Assert.Equal("two", cursor[barColumn]);
+            Assert.Equal("many", cursor[bazColumn]);
+            break;
+          default:
+            throw new InvalidOperationException("Unexpected state");
+        }
+        n++;
+      }
+      Assert.Equal(3, n);
+    }
+
+    [Fact]
+    public void CanWriteXsv()
+    {
+      /*
+       * This is an example of "normal" reading and writing of XSV
+       * files. The API used for reading (Xsv.ReadXsvCursor()) is tuned
+       * for the use case where you know in advance which columns you
+       * expect in the input. For more dynamic scenarios use the underlying
+       * APIs that Xsv.ReadXsvCursor() is built on.
+       */
+
+      var datafile = "sample1.csv";
+      Assert.True(File.Exists(datafile));
+
+      var outfile = "sample-out-1.csv";
+      if(File.Exists(outfile))
+      {
+        File.Delete(outfile);
+      }
+      Assert.False(File.Exists(outfile));
+
+      var incolumns = new ColumnMap();
+      var fooInColumn = incolumns.Declare("foo");
+      var barInColumn = incolumns.Declare("bar");
+      var bazInColumn = incolumns.Declare("baz");
+
+      using(var itrw = Xsv.WriteXsv(outfile))
+      {
+        var xob = new XsvOutBuffer(new[] { "baz", "foo" });
+        var bazOutColumn = xob.GetColumn("baz");
+        var fooOutColumn = xob.GetColumn("foo");
+
+        itrw.WriteHeader(xob);
+
+        foreach(var cursor in Xsv.ReadXsvCursor(datafile, incolumns))
+        {
+          xob[fooOutColumn] = cursor[fooInColumn];
+          xob[bazOutColumn] = cursor[bazInColumn];
+          itrw.WriteBuffer(xob);
+        }
+
+        itrw.FinishFile();
+      }
+
+      Assert.True(File.Exists(outfile));
+
     }
 
   }

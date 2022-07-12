@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using XsvLib.Implementation.Csv;
 using XsvLib.Implementation;
 using XsvLib.Implementation.Tsv;
+using XsvLib.Tables.Cursor;
 
 namespace XsvLib
 {
@@ -77,6 +78,39 @@ namespace XsvLib
     {
       var reader = File.OpenText(filename);
       return ReadXsv(reader, filename, skipEmptyLines, leaveOpen: false);
+    }
+
+    /// <summary>
+    /// Open an XSV style data file and read the rows in it as a sequence of
+    /// XsvCursor objects. The same XsvCursor is returned for each row, bound
+    /// to a different row each time.
+    /// This method is recommended for scenarios where you know the columns you
+    /// are interested in in advance.
+    /// </summary>
+    /// <param name="filename">
+    /// The name of the XSV file to open
+    /// </param>
+    /// <param name="columns">
+    /// The column mapper with the names of the columns you are interested in
+    /// already Declared.
+    /// </param>
+    /// <param name="skipEmptyLines">
+    /// Normally true. Setting this to false enables scenarios where
+    /// empty input lines must be flagged as error.
+    /// </param>
+    /// <returns>
+    /// A sequence of the same XsvCursor instance repeated for each row.
+    /// </returns>
+    public static IEnumerable<XsvCursor> ReadXsvCursor(
+      string filename, ColumnMap columns, bool skipEmptyLines = true)
+    {
+      using(var xr = Xsv.ReadXsv(filename, skipEmptyLines).AsXsvReader())
+      {
+        foreach(var cursor in xr.ReadCursor(columns))
+        {
+          yield return cursor;
+        }
+      }
     }
 
     /// <summary>
