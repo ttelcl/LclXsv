@@ -22,10 +22,12 @@ namespace XsvLib.Tables.Cursor
     /// indexer of ColumnMap
     /// </summary>
     internal MappedColumn(
+      ColumnMap owner,
       string name)
       : base(name)
     {
       Index = -1;
+      Owner = owner;
     }
 
     /// <summary>
@@ -38,5 +40,9 @@ namespace XsvLib.Tables.Cursor
     /// </summary>
     public bool HasIndex => Index >= 0;
 
+    /// <summary>
+    /// The ColumnMap this MappedColumn is part of
+    /// </summary>
+    public ColumnMap Owner { get; }
   }
 }

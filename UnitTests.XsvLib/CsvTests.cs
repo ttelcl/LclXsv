@@ -120,6 +120,8 @@ namespace UnitTests.XsvLib
       var c4 = cm.Declare("a");
       var c5 = cm.Declare("b");
 
+      // Note: "d" is deliberately missing
+
       var r = cm.BindColumns(new[] { "b", "c", "d", "e" });
 
       Assert.False(r);
@@ -140,6 +142,9 @@ namespace UnitTests.XsvLib
       Assert.Equal(5, all.Count);
 
       Assert.Equal(new[] { "a", "g", "b", "c", "e" }, all.Select(c => c.Name));
+
+      var r2 = cm.BindColumns(new[] { "a", "b", "c", "e", "g" });
+      Assert.True(r2);
     }
 
   }

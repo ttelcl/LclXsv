@@ -67,7 +67,7 @@ namespace XsvLib.Tables.Cursor
         {
           if(create)
           {
-            result = new MappedColumn(name);
+            result = new MappedColumn(this, name);
             _columns.Add(name, result);
             return result;
           }
