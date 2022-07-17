@@ -114,6 +114,43 @@ namespace XsvLib
     }
 
     /// <summary>
+    /// Open an XSV style data file and read the rows in it and bind them 
+    /// one by one to the given XsvCursor or subclass object, returning
+    /// that same object for each row.
+    /// </summary>
+    /// <typeparam name="TCursor">
+    /// XsvCursor, or more likely a custom subclass that sets up specific columns
+    /// </typeparam>
+    /// <param name="filename">
+    /// The name of the file to read
+    /// </param>
+    /// <param name="cursor">
+    /// The cursor object, with columns already declared in its ColumnMap.
+    /// The columns could for instance be declared manually, or be declared
+    /// in the constructor of an XsvCursor subclass.
+    /// </param>
+    /// <param name="skipEmptyLines">
+    /// Normally true. Setting this to false enables scenarios where
+    /// empty input lines must be flagged as error.
+    /// </param>
+    /// <returns>
+    /// A sequence of the argument "cursor" instance repeated for each data
+    /// row.
+    /// </returns>
+    public static IEnumerable<TCursor> ReadXsvCursor<TCursor>(
+      string filename, TCursor cursor, bool skipEmptyLines = true)
+      where TCursor : XsvCursor
+    {
+      using(var xr = Xsv.ReadXsv(filename, skipEmptyLines).AsXsvReader())
+      {
+        foreach(var c in xr.ReadCursor(cursor))
+        {
+          yield return c;
+        }
+      }
+    }
+
+    /// <summary>
     /// Wrap a TextWriter in in ITextRecordWriter implementation for writing to
     /// one of the supported XSV formats (CSV or TSV).
     /// </summary>

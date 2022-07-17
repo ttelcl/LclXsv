@@ -64,5 +64,40 @@ namespace XsvLib.Tables
     /// </param>
     public abstract string? this[TColumn column] { get; }
 
+    /// <summary>
+    /// Get the non-null string value of the column, throwing an exception
+    /// if there is no value
+    /// </summary>
+    /// <param name="column">
+    /// The column to retrieve
+    /// </param>
+    /// <returns>
+    /// The string value for the column (which can be empty, but not null)
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when no data is loaded, or the column has no valid mapping
+    /// </exception>
+    public string GetString(TColumn column)
+    {
+      if(HasData)
+      {
+        var value = this[column];
+        if(value != null)
+        {
+          return value;
+        }
+      }
+      throw new InvalidOperationException(
+        $"No data loaded for column {column.Name}");
+    }
+
+    /// <summary>
+    /// Get the value of the column, parsed as integer
+    /// </summary>
+    public int GetInt32(TColumn column)
+    {
+      return Int32.Parse(GetString(column));
+    }
+
   }
 }

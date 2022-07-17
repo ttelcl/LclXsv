@@ -19,10 +19,22 @@ namespace XsvLib.Tables.Cursor
     /// <summary>
     /// Create a new XsvCursor
     /// </summary>
-    public XsvCursor()
+    /// <param name="columnMapping">
+    /// The ColumnMap that contains or will contain the column definitions.
+    /// If null, a new empty ColumnMap will be created
+    /// </param>
+    public XsvCursor(
+      ColumnMap? columnMapping)
       : base()
     {
+      ColumnMapping = columnMapping ?? new ColumnMap();
     }
+
+    /// <summary>
+    /// The ColumnMap that owns the MappedColumn instances to be passed
+    /// as indexes.
+    /// </summary>
+    public ColumnMap ColumnMapping { get; }
 
     /// <summary>
     /// Get the value for a specific column from the current row,

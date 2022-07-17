@@ -13,8 +13,9 @@
     <RepositoryUrl>https://github.com/ttelcl/LclXsv</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <VersionPrefix>0.99.0</VersionPrefix>
-    <AssemblyName>Lcl.$(MSBuildProjectName)</AssemblyName>  
+    <VersionPrefix>0.100.0</VersionPrefix>
+    <AssemblyName>Lcl.$(MSBuildProjectName)</AssemblyName>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>  
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

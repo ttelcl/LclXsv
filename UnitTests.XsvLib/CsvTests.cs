@@ -231,6 +231,90 @@ namespace UnitTests.XsvLib
     }
 
     [Fact]
+    public void CanUseStandardXsvCursor()
+    {
+      var datafile = "sample1.csv";
+      Assert.True(File.Exists(datafile));
+
+      var cursor = new XsvCursor(null);
+      
+      var fooColumn = cursor.ColumnMapping.Declare("foo");
+      var barColumn = cursor.ColumnMapping.Declare("bar");
+      var bazColumn = cursor.ColumnMapping.Declare("baz");
+
+      var n = 0;
+      using(var xr = Xsv.ReadXsv(datafile).AsXsvReader())
+      {
+        foreach(var cur in xr.ReadCursor(cursor))
+        {
+          Assert.True(n<3);
+          switch(n)
+          {
+            case 0:
+              Assert.Equal("0", cur[fooColumn]);
+              Assert.Equal("zero", cur[barColumn]);
+              Assert.Equal("nothing", cur[bazColumn]);
+              break;
+            case 1:
+              Assert.Equal("1", cur[fooColumn]);
+              Assert.Equal("one", cur[barColumn]);
+              Assert.Equal("something", cur[bazColumn]);
+              break;
+            case 2:
+              Assert.Equal("2", cur[fooColumn]);
+              Assert.Equal("two", cur[barColumn]);
+              Assert.Equal("many", cur[bazColumn]);
+              break;
+            default:
+              throw new InvalidOperationException("Unexpected state");
+          }
+          n++;
+        }
+        Assert.Equal(3, n);
+      }
+    }
+
+    [Fact]
+    public void CanUseCustomXsvCursor()
+    {
+      var datafile = "sample1.csv";
+      Assert.True(File.Exists(datafile));
+
+      var cursor = new CustomXsvCursor();
+
+      var n = 0;
+      using(var xr = Xsv.ReadXsv(datafile).AsXsvReader())
+      {
+        foreach(var cur in xr.ReadCursor(cursor))
+        {
+          Assert.True(n<3);
+          switch(n)
+          {
+            case 0:
+              Assert.Equal(0, cur.Foo);
+              Assert.Equal("zero", cur.Bar);
+              Assert.Equal("nothing", cur.Baz);
+              break;
+            case 1:
+              Assert.Equal(1, cur.Foo);
+              Assert.Equal("one", cur.Bar);
+              Assert.Equal("something", cur.Baz);
+              break;
+            case 2:
+              Assert.Equal(2, cur.Foo);
+              Assert.Equal("two", cur.Bar);
+              Assert.Equal("many", cur.Baz);
+              break;
+            default:
+              throw new InvalidOperationException("Unexpected state");
+          }
+          n++;
+        }
+        Assert.Equal(3, n);
+      }
+    }
+
+    [Fact]
     public void CanWriteXsv()
     {
       /*

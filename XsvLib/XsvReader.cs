@@ -87,11 +87,41 @@ namespace XsvLib
     /// </exception>
     public IEnumerable<XsvCursor> ReadCursor(ColumnMap columnMap)
     {
-      var cursor = new XsvCursor();
-      var ok = columnMap.BindColumns(Header);
+      var cursor = new XsvCursor(columnMap);
+      var ok = cursor.ColumnMapping.BindColumns(Header);
       if(!ok)
       {
-        var missing = String.Join(", ", columnMap.UnboundColumns());
+        var missing = String.Join(", ", cursor.ColumnMapping.UnboundColumns());
+        throw new InvalidOperationException(
+          $"The following column(s) were expected but are missing from the input: {missing}");
+      }
+      foreach(var rawrow in ReadRecords())
+      {
+        cursor.SetRow(rawrow);
+        yield return cursor;
+      }
+      cursor.SetRow(null);
+    }
+
+    /// <summary>
+    /// Bind this XsvReader's Header to the Cursor's ColumnMap and iterate all data rows,
+    /// returning the cursor argument for each data row. The same instance 
+    /// (bound to a different raw row) is returned for each iteration.
+    /// </summary>
+    /// <param name="cursor">
+    /// An instance of XsvCursor or a subclass.
+    /// </param>
+    /// <returns>
+    /// An iteration that returns the "cursor" argument on each iteration, bound
+    /// to each raw data row.
+    /// </returns>
+    public IEnumerable<TCursor> ReadCursor<TCursor>(TCursor cursor)
+      where TCursor : XsvCursor
+    {
+      var ok = cursor.ColumnMapping.BindColumns(Header);
+      if(!ok)
+      {
+        var missing = String.Join(", ", cursor.ColumnMapping.UnboundColumns());
         throw new InvalidOperationException(
           $"The following column(s) were expected but are missing from the input: {missing}");
       }
