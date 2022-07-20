@@ -13,7 +13,7 @@
     <RepositoryUrl>https://github.com/ttelcl/LclXsv</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <VersionPrefix>0.100.0</VersionPrefix>
+    <VersionPrefix>0.101.0</VersionPrefix>
     <AssemblyName>Lcl.$(MSBuildProjectName)</AssemblyName>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>  
   </PropertyGroup>

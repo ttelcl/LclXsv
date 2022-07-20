@@ -151,6 +151,67 @@ namespace XsvLib
     }
 
     /// <summary>
+    /// Open an XSV style data source and read the rows in it and bind them 
+    /// one by one to the given XsvCursor or subclass object, returning
+    /// that same object for each row.
+    /// </summary>
+    /// <typeparam name="TCursor">
+    /// XsvCursor, or more likely a custom subclass that sets up specific columns
+    /// </typeparam>
+    /// <param name="opener">
+    /// A function that opens the data source and returns it.
+    /// </param>
+    /// <param name="cursor">
+    /// The cursor object, with columns already declared in its ColumnMap.
+    /// The columns could for instance be declared manually, or be declared
+    /// in the constructor of an XsvCursor subclass.
+    /// </param>
+    /// <returns>
+    /// A sequence of the argument "cursor" instance repeated for each data
+    /// row.
+    /// </returns>
+    public static IEnumerable<TCursor> ReadXsvCursor<TCursor>(
+      Func<ITextRecordReader> opener, TCursor cursor)
+      where TCursor : XsvCursor
+    {
+      using(var xr = opener().AsXsvReader())
+      {
+        foreach(var c in xr.ReadCursor(cursor))
+        {
+          yield return c;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Open an XSV style data source and read the rows in it and bind them 
+    /// one by one to the given XsvCursor or subclass object, returning
+    /// that same object for each row. This overload is shaped as an extension method
+    /// on the cursor object.
+    /// </summary>
+    /// <typeparam name="TCursor">
+    /// XsvCursor, or more likely a custom subclass that sets up specific columns
+    /// </typeparam>
+    /// <param name="cursor">
+    /// The cursor object, with columns already declared in its ColumnMap.
+    /// The columns could for instance be declared manually, or be declared
+    /// in the constructor of an XsvCursor subclass.
+    /// </param>
+    /// <param name="opener">
+    /// A function that opens the data source and returns it.
+    /// </param>
+    /// <returns>
+    /// A sequence of the argument "cursor" instance repeated for each data
+    /// row.
+    /// </returns>
+    public static IEnumerable<TCursor> ReadXsvCursor<TCursor>(
+      this TCursor cursor, Func<ITextRecordReader> opener)
+      where TCursor : XsvCursor
+    {
+      return ReadXsvCursor(opener, cursor);
+    }
+
+    /// <summary>
     /// Wrap a TextWriter in in ITextRecordWriter implementation for writing to
     /// one of the supported XSV formats (CSV or TSV).
     /// </summary>
