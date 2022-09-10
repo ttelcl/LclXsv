@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace XsvLib.Tables
 {
   /// <summary>
-  /// A buffer abstractly storing a row of an XSV table.
+  /// A buffer abstractly storing a row of an XSV table, for reading purposes.
   /// This class is indexed by an XsvColumn subclass, and
   /// its implementation is tied to that XsvColumn implementation
   /// </summary>
