@@ -54,6 +54,11 @@ namespace XsvLib
     /// </exception>
     public MappedColumn? this[string name, bool create = false, bool optional = false] {
       get {
+        if(create && CreationLocked)
+        {
+          throw new InvalidOperationException(
+            $"This ColumnMap has been locked for new column creation");
+        }
         if(_columns.TryGetValue(name, out MappedColumn result))
         {
           if(create && !optional)
@@ -142,6 +147,23 @@ namespace XsvLib
     }
 
     /// <summary>
+    /// Re-bind columns, assigning a column index based on the current order
+    /// of columns (which is declaration order, unless AllColumns(true) was called)
+    /// </summary>
+    public void BindColumns(bool allowEmpty = false)
+    {
+      if(_columns.Count == 0 && !allowEmpty)
+      {
+        throw new InvalidOperationException("Cannot bind columns - there are none!");
+      }
+      var i = 0;
+      foreach(var column in _columns.Values)
+      {
+        column.Index = i++;
+      }
+    }
+
+    /// <summary>
     /// Enumerate the columns that have no binding
     /// </summary>
     public IEnumerable<MappedColumn> UnboundColumns()
@@ -168,5 +190,32 @@ namespace XsvLib
       }
     }
 
+    /// <summary>
+    /// Return the columns. Unless AllColumns(true) was called, the order is
+    /// the declaration order.
+    /// </summary>
+    public IEnumerable<MappedColumn> EnumColumns()
+    {
+      return _columns.Values;
+    }
+
+    /// <summary>
+    /// Get the number of declared columns
+    /// </summary>
+    public int Count { get => _columns.Count; }
+
+    /// <summary>
+    /// True if creating new columns is disabled, false if enabled.
+    /// Once disabled this stays disabled. Use LockCreation to activate the lock.
+    /// </summary>
+    public bool CreationLocked { get; private set; }
+
+    /// <summary>
+    /// Sets CreationLocked to true, preventing further column creations
+    /// </summary>
+    public void LockCreation()
+    {
+      CreationLocked = true;
+    }
   }
 }

@@ -1,5 +1,7 @@
 ﻿# Serialization Model
 
+> :warning: This namespace is a work in progress
+
 Classes in this namespace approach the topic of reading and
 writing XSV in a different way. Upon reading, data rows are
 serialized into a typed DTO class, while upon writing instances

@@ -14,6 +14,7 @@ using XsvLib.Implementation.Csv;
 using XsvLib.Implementation;
 using XsvLib.Implementation.Tsv;
 using XsvLib.Tables.Cursor;
+using XsvLib.Buffers;
 
 namespace XsvLib
 {
@@ -209,6 +210,31 @@ namespace XsvLib
       where TCursor : XsvCursor
     {
       return ReadXsvCursor(opener, cursor);
+    }
+
+    /// <summary>
+    /// Plays the headered XSV source 'reader', first binding and locking
+    /// the given buffer, then returning the buffer over and again with each
+    /// row attached.
+    /// </summary>
+    public static IEnumerable<XsvBuffer> ReadXsvBuffer(
+      this ITextRecordReader reader, XsvBuffer unlockedBuffer)
+    {
+      if(unlockedBuffer.IsLocked)
+      {
+        throw new ArgumentException(
+          "Expecting an XsvBuffer that is not yet locked as argument");
+      }
+      using(var xr = reader.AsXsvReader())
+      {
+        unlockedBuffer.Lock(xr.Header);
+        foreach(var row in xr.ReadRecords())
+        {
+          unlockedBuffer.Attach(row);
+          yield return unlockedBuffer;
+        }
+        unlockedBuffer.Detach();
+      }
     }
 
     /// <summary>
