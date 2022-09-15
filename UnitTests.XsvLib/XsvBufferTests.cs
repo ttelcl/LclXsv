@@ -28,7 +28,7 @@ namespace UnitTests.XsvLib
     [Fact]
     public void CanReadXsvWithXsvBufferBasic()
     {
-      var buffer = new XsvBuffer();
+      var buffer = new XsvBuffer(false);
       var foo = buffer.Declare("foo");
       var bar = buffer.Declare("bar");
       var baz = buffer.Declare("baz");
@@ -67,7 +67,7 @@ namespace UnitTests.XsvLib
     [Fact]
     public void CanReadXsvWithXsvBufferReordered()
     {
-      var buffer = new XsvBuffer();
+      var buffer = new XsvBuffer(false);
       var bar = buffer.Declare("bar");
       var baz = buffer.Declare("baz");
       var foo = buffer.Declare("foo");
@@ -106,7 +106,7 @@ namespace UnitTests.XsvLib
     [Fact]
     public void CanReadXsvWithXsvBufferOnlySomeColumns()
     {
-      var buffer = new XsvBuffer();
+      var buffer = new XsvBuffer(false);
       var foo = buffer.Declare("foo");
       var baz = buffer.Declare("baz");
 
@@ -136,6 +136,57 @@ namespace UnitTests.XsvLib
         }
         Assert.Equal(3, row);
       }
+    }
+
+    [Fact]
+    public void CanWriteWithXsvBuffer()
+    {
+      const string outname = "sample-output-1.csv";
+
+      var buffer = new XsvBuffer(true);
+      var foo = buffer.Declare("foo");
+      var bar = buffer.Declare("bar");
+      var baz = buffer.Declare("baz");
+      buffer.Lock();
+      Assert.Equal(3, buffer.Accessors.Count);
+      Assert.Equal(0, buffer.FieldsWritten);
+
+      using(var itrw = Xsv.WriteXsv(outname))
+      {
+        buffer.WriteHeader(itrw);
+        Assert.Equal(0, buffer.FieldsWritten);
+        Assert.False(foo.IsSet);
+        foo.Value = "0";
+        Assert.True(foo.IsSet);
+        Assert.Equal(1, buffer.FieldsWritten);
+        Assert.False(bar.IsSet);
+        bar.Set("zero");
+        Assert.True(bar.IsSet);
+        Assert.Equal(2, buffer.FieldsWritten);
+        baz.Set("nothing");
+        Assert.Equal(3, buffer.FieldsWritten);
+        buffer.WriteRow(itrw);
+        Assert.Equal(0, buffer.FieldsWritten);
+        foo.Set("1");
+        Assert.Equal(1, buffer.FieldsWritten);
+        bar.Set("one");
+        Assert.Equal(2, buffer.FieldsWritten);
+        baz.Set("something");
+        Assert.Equal(3, buffer.FieldsWritten);
+        buffer.WriteRow(itrw);
+        Assert.Equal(0, buffer.FieldsWritten);
+        foo.Set("2");
+        bar.Set("two");
+        baz.Set("many");
+        buffer.WriteRow(itrw);
+      }
+
+      var lines = File.ReadAllLines(outname);
+      Assert.Equal(4, lines.Length);
+      Assert.Equal("foo,bar,baz", lines[0]);
+      Assert.Equal("0,zero,nothing", lines[1]);
+      Assert.Equal("1,one,something", lines[2]);
+      Assert.Equal("2,two,many", lines[3]);
     }
 
   }

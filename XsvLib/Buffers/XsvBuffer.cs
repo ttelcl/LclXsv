@@ -33,17 +33,25 @@ namespace XsvLib.Buffers
     private IReadOnlyList<string>? _attachedReadonlyList;
     private string[]? _attachedArray;
     private List<string>? _attachedList;
+    private bool[]? _fieldWritten;
+    private int _fieldsWritten;
 
     /// <summary>
     /// Create a new XsvBuffer.
     /// </summary>
-    public XsvBuffer(bool caseSensitive = false)
+    public XsvBuffer(bool trackWrites, bool caseSensitive = false)
     {
       _columnMap = new ColumnMap(caseSensitive);
       _accessors = new List<XsvColumnAccessor>();
       Accessors = _accessors.AsReadOnly();
       _buffer = null;
+      TrackWrites = trackWrites;
     }
+
+    /// <summary>
+    /// True if this buffer is set up to track and check writes
+    /// </summary>
+    public bool TrackWrites { get; }
 
     /// <summary>
     /// Get an accessor for the named column. If the column
@@ -113,10 +121,11 @@ namespace XsvLib.Buffers
       if(!IsLocked)
       {
         _buffer = new string[_accessors.Count];
-        for(var i = 0; i < _buffer.Length; i++)
+        if(TrackWrites)
         {
-          _buffer[i] = String.Empty;
+          _fieldWritten = new bool[_accessors.Count];
         }
+        Clear();
       }
     }
 
@@ -143,17 +152,18 @@ namespace XsvLib.Buffers
       }
       var sortedAccessors =
         (from accessor in _accessors
-        orderby accessor.Column.Index
-        select accessor).ToList();
+         orderby accessor.Column.Index
+         select accessor).ToList();
       _accessors.Clear();
       _accessors.AddRange(sortedAccessors);
       if(!IsLocked)
       {
         _buffer = new string[_accessors.Count];
-        for(var i = 0; i < _buffer.Length; i++)
+        if(TrackWrites)
         {
-          _buffer[i] = String.Empty;
+          _fieldWritten = new bool[_accessors.Count];
         }
+        Clear();
       }
     }
 
@@ -173,7 +183,12 @@ namespace XsvLib.Buffers
     /// <summary>
     /// The number of columns.
     /// </summary>
-    public int Count { get; private set; }
+    public int Count { get => Accessors.Count; }
+
+    /// <summary>
+    /// The number of fields written so far (only valid if TrackWrites is true)
+    /// </summary>
+    public int FieldsWritten { get => _fieldsWritten; }
 
     /// <summary>
     /// Get or set a value in the buffer. Not usable before
@@ -193,6 +208,10 @@ namespace XsvLib.Buffers
         if(i < 0 || i >= _buffer!.Length)
         {
           throw new IndexOutOfRangeException($"Invalid column index");
+        }
+        if(TrackWrites && !_fieldWritten![i])
+        {
+          throw new InvalidOperationException($"Field '{Accessors[i].Column.Name}' was not set yet");
         }
         if(_attachedArray!=null)
         {
@@ -216,6 +235,11 @@ namespace XsvLib.Buffers
         if(i < 0 || i >= _buffer!.Length)
         {
           throw new IndexOutOfRangeException($"Invalid column index");
+        }
+        if(TrackWrites && !_fieldWritten![i])
+        {
+          _fieldWritten![i] = true;
+          _fieldsWritten++;
         }
         if(_attachedArray!=null)
         {
@@ -263,21 +287,80 @@ namespace XsvLib.Buffers
     }
 
     /// <summary>
-    /// Detach any external buffers
+    /// Detach any external buffers and mark all fields as not-yet-written
     /// </summary>
     public void Detach()
     {
+      Reset();
       _attachedArray = null;
       _attachedList = null;
       _attachedReadonlyList = null;
     }
 
     /// <summary>
-    /// Attach an array as external buffer and detach other external buffers
+    /// Clears all fields to empty strings and marks all fields as not-yet-written
+    /// </summary>
+    public void Clear()
+    {
+      for(var i = 0; i<Count; i++)
+      {
+        this[i] = String.Empty;
+      }
+      Reset(); // need to be put after the assignments above, since those set the flags!
+    }
+
+    /// <summary>
+    /// Set the field to an empty string and clear its "is-set" flag.
+    /// </summary>
+    public void ClearField(int index)
+    {
+      CheckLocked();
+      if(index < 0 || index >= _buffer!.Length)
+      {
+        throw new IndexOutOfRangeException($"Invalid column index");
+      }
+      this[index] = String.Empty;
+      _fieldWritten![index] = false;
+    }
+
+    /// <summary>
+    /// Test if the field identified by "index" has been assigned a value.
+    /// This will always return false if write tracking is disabled
+    /// </summary>
+    public bool IsSet(int index)
+    {
+      CheckLocked();
+      if(index < 0 || index >= _buffer!.Length)
+      {
+        throw new IndexOutOfRangeException($"Invalid column index");
+      }
+      return TrackWrites && _fieldWritten![index];
+    }
+
+    /// <summary>
+    /// Marks all fields as not-yet-written (without changing any buffered values).
+    /// This method is automatically called as part of Clear() and all Attach() overloads.
+    /// </summary>
+    public void Reset()
+    {
+      CheckLocked();
+      if(TrackWrites)
+      {
+        for(var i = 0; i<Count; i++)
+        {
+          _fieldWritten![i] = false;
+        }
+      }
+      _fieldsWritten = 0;
+    }
+
+    /// <summary>
+    /// Attach an array as external buffer, detach other external buffers,
+    /// and reset all field write markers
     /// </summary>
     public void Attach(string[] buffer)
     {
-      CheckLocked();
+      Reset();
       if(buffer.Length != _buffer!.Length)
       {
         throw new ArgumentException("Incorrect buffer length");
@@ -288,12 +371,13 @@ namespace XsvLib.Buffers
     }
 
     /// <summary>
-    /// Attach an IReadOnlyList as external buffer and detach other external buffers.
+    /// Attach an IReadOnlyList as external buffer, detach other external buffers,
+    /// and reset all field write markers.
     /// Until it is detached this XsvBuffer will be readonly!
     /// </summary>
     public void Attach(IReadOnlyList<string> buffer)
     {
-      CheckLocked();
+      Reset();
       if(buffer.Count != _buffer!.Length)
       {
         throw new ArgumentException("Incorrect buffer length");
@@ -304,11 +388,12 @@ namespace XsvLib.Buffers
     }
 
     /// <summary>
-    /// Attach an IList as external buffer and detach other external buffers
+    /// Attach an IList as external buffer, detach other external buffers,
+    /// and reset all field write markers.
     /// </summary>
     public void Attach(List<string> buffer)
     {
-      CheckLocked();
+      Reset();
       if(buffer.Count != _buffer!.Length)
       {
         throw new ArgumentException("Incorrect buffer length");
@@ -321,15 +406,30 @@ namespace XsvLib.Buffers
     /// <summary>
     /// Write the current row to an ITextRecordWriter
     /// </summary>
-    public void WriteRow(ITextRecordWriter itrw)
+    /// <param name="itrw">
+    /// The destination to write to
+    /// </param>
+    /// <param name="reset">
+    /// Default true. If true, fields are marked as not-yet-written.
+    /// </param>
+    public void WriteRow(ITextRecordWriter itrw, bool reset = true)
     {
       CheckLocked();
+      if(TrackWrites && _fieldsWritten != Accessors.Count)
+      {
+        throw new InvalidOperationException(
+          $"Not all fields have been written since the last reset");
+      }
       itrw.StartLine();
       foreach(var a in Accessors)
       {
         itrw.WriteField(a.Value);
       }
       itrw.FinishLine();
+      if(reset)
+      {
+        Reset();
+      }
     }
 
     /// <summary>

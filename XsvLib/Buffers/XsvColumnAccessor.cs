@@ -71,5 +71,35 @@ namespace XsvLib.Buffers
       Owner[Column.Index] = value;
     }
 
+    /// <summary>
+    /// Clear the column value to an empty string, and mark the
+    /// column as not-set in case Write Tracking is enabled on the
+    /// backing XsvBuffer
+    /// </summary>
+    public void Clear()
+    {
+      if(Column.Index < 0)
+      {
+        throw new InvalidOperationException(
+          $"The column '{Column.Name}' has not been bound yet");
+      }
+      Owner.ClearField(Column.Index);
+    }
+
+    /// <summary>
+    /// Check if a value has been set for this column. This will always
+    /// be false if the XsvBuffer isn't set to track writes.
+    /// </summary>
+    public bool IsSet {
+      get {
+        if(Column.Index < 0)
+        {
+          throw new InvalidOperationException(
+            $"The column '{Column.Name}' has not been bound yet");
+        }
+        return Owner.IsSet(Column.Index);
+      }
+    }
+
   }
 }
