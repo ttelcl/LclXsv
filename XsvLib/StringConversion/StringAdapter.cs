@@ -8,8 +8,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+// using System.Diagnostics.CodeAnalysis;
 
-namespace XsvLib.Serialization
+namespace XsvLib.StringConversion
 {
   /// <summary>
   /// Defines the logic for converting the given type to or from a string,
@@ -24,19 +25,26 @@ namespace XsvLib.Serialization
     {
     }
 
+    // *********** [MaybeNullWhen] is not supported in .net standard 2.0 ***********
+    // causing a problem when implementing TryParse-like methods
+    ///// <summary>
+    ///// Try to parse the string
+    ///// </summary>
+    ///// <param name="s">
+    ///// The string to parse
+    ///// </param>
+    ///// <param name="value">
+    ///// The output value on success
+    ///// </param>
+    ///// <returns>
+    ///// True on success, false on failure
+    ///// </returns>
+    //public abstract bool TryParse(string s, /*[MaybeNullWhen(returnValue: false)]*/ out TData value);
+
     /// <summary>
-    /// Try to parse the string
+    /// Parse a string to a TData instance
     /// </summary>
-    /// <param name="s">
-    /// The string to parse
-    /// </param>
-    /// <param name="value">
-    /// The output value on success
-    /// </param>
-    /// <returns>
-    /// True on success, false on failure
-    /// </returns>
-    public abstract bool TryParse(string s, out TData value);
+    public abstract TData ParseString(string value);
 
     /// <summary>
     /// Convert a data value to a string

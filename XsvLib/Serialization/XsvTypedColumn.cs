@@ -8,20 +8,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using XsvLib.StringConversion;
 using XsvLib.Tables;
 
 namespace XsvLib.Serialization
 {
-  /// <summary>
-  /// Defines a column in an XSV table that will be mapped to
-  /// another data type.
-  /// This abstract base class does not define that data type.
-  /// </summary>
-  /// <typeparam name="TModel">
-  /// The type of the row model class that will host the storage for the column
-  /// </typeparam>
-  public abstract class XsvTypedColumn<TModel>: XsvColumn
+    /// <summary>
+    /// Defines a column in an XSV table that will be mapped to
+    /// another data type.
+    /// This abstract base class does not define that data type.
+    /// </summary>
+    /// <typeparam name="TModel">
+    /// The type of the row model class that will host the storage for the column
+    /// </typeparam>
+    public abstract class XsvTypedColumn<TModel>: XsvColumn
   {
     /// <summary>
     /// Create a new XsvTypedColumn
@@ -83,15 +83,7 @@ namespace XsvLib.Serialization
     /// <inheritdoc/>
     public override void SetString(TModel row, string value)
     {
-      if(Converter.TryParse(value, out var datavalue))
-      {
-        Accessor.Set(row, datavalue);
-      }
-      else
-      {
-        throw new ArgumentException(
-          $"Invalid value for column '{Name}': '{value}'");
-      }
+      Accessor.Set(row, Converter.ParseString(value));
     }
 
   }
