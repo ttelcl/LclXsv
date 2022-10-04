@@ -9,6 +9,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using XsvLib.StringConversion;
+
 namespace XsvLib.Buffers
 {
   /// <summary>
@@ -39,13 +41,32 @@ namespace XsvLib.Buffers
     /// <summary>
     /// Create a new XsvBuffer.
     /// </summary>
-    public XsvBuffer(bool trackWrites, bool caseSensitive = false)
+    /// <param name="trackWrites">
+    /// When true, write operations are tracked, safeguarding that each column
+    /// is assigned before emitting a row. This parameter is not relevant in
+    /// read-only scenarios.
+    /// </param>
+    /// <param name="caseSensitive">
+    /// Default false. Whether column names should be treated case sensitive or case insensitive.
+    /// </param>
+    /// <param name="adapterLibrary">
+    /// The StringAdapterLibrary used for creating typed column accessors.
+    /// If null, a default library is generated that supports the types
+    /// string, int, long, bool, int?, long? and bool?.
+    /// </param>
+    public XsvBuffer(bool trackWrites, bool caseSensitive = false, StringAdapterLibrary? adapterLibrary = null)
     {
       _columnMap = new ColumnMap(caseSensitive);
       _accessors = new List<XsvColumnAccessor>();
       Accessors = _accessors.AsReadOnly();
       _buffer = null;
       TrackWrites = trackWrites;
+      if(adapterLibrary == null)
+      {
+        adapterLibrary = new StringAdapterLibrary();
+        adapterLibrary.RegisterStandard();
+      }
+      AdapterLibrary = adapterLibrary;
     }
 
     /// <summary>
@@ -54,7 +75,15 @@ namespace XsvLib.Buffers
     public bool TrackWrites { get; }
 
     /// <summary>
-    /// Get an accessor for the named column. If the column
+    /// The string adapter library used for generating typed accessors.
+    /// If null was passed to the constructor, this is a newly created library
+    /// prepopulated with a few common adapters (using
+    /// <seealso cref="StringAdapterLibrary.RegisterStandard(bool)"/>)
+    /// </summary>
+    public StringAdapterLibrary AdapterLibrary { get; }
+
+    /// <summary>
+    /// Get a string accessor for the named column. If the column
     /// does not exist yet, it is created, or fails if this
     /// buffer has been locked. If created, a column index is
     /// assigned (in declaration order).
@@ -104,6 +133,63 @@ namespace XsvLib.Buffers
     public XsvColumnAccessor Declare(string name)
     {
       return GetColumn(name, true);
+    }
+
+    /// <summary>
+    /// Get a typed accessor for the named column. If the column
+    /// does not exist yet, it is created, or fails if this
+    /// buffer has been locked. If created, a column index is
+    /// assigned (in declaration order).
+    /// The type adapter used is taken from <see cref="AdapterLibrary"/>.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The type to treat the column as.
+    /// </typeparam>
+    /// <param name="columnName">
+    /// The name of the column
+    /// </param>
+    /// <param name="adapterName">
+    /// Default "". The name of the adapter in <see cref="AdapterLibrary"/>.
+    /// This parameter enables using different serialization formats for columns
+    /// of the same type.
+    /// </param>
+    /// <param name="declare">
+    /// (default false). When true, it is an error if the column already exists
+    /// </param>
+    /// <returns>
+    /// A typed column accessor.
+    /// </returns>
+    public XsvTypedAccessor<T> GetColumn<T>(
+      string columnName, string adapterName="", bool declare = false)
+    {
+      var stringAccessor = GetColumn(columnName, declare);
+      var adapter = AdapterLibrary.Get<T>(adapterName);
+      return new XsvTypedAccessor<T>(stringAccessor, adapter);
+    }
+
+    /// <summary>
+    /// Declare a column and get a typed accessor for the named column.
+    /// It is an error if the column already exists or this buffer is
+    /// already locked. A column index is assigned (in declaration order).
+    /// The type adapter used is taken from <see cref="AdapterLibrary"/>.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The type to treat the column as.
+    /// </typeparam>
+    /// <param name="columnName">
+    /// The name of the column
+    /// </param>
+    /// <param name="adapterName">
+    /// Default "". The name of the adapter in <see cref="AdapterLibrary"/>.
+    /// This parameter enables using different serialization formats for columns
+    /// of the same type.
+    /// </param>
+    /// <returns>
+    /// A typed column accessor.
+    /// </returns>
+    public XsvTypedAccessor<T> Declare<T>(string columnName, string adapterName = "")
+    {
+      return GetColumn<T>(columnName, adapterName, true);
     }
 
     /// <summary>
