@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace XsvLib.StringConversion
+namespace XsvLib.StringConversion.Implementations
 {
   /// <summary>
   /// A filter turning a string adapter for a non-nullable type
@@ -20,7 +20,7 @@ namespace XsvLib.StringConversion
   /// Nullable{T} has a strange position in the type system and type tests against
   /// "T?" sometimes behave different than the same tests against "Nullable{T}" 
   /// </remarks>
-  internal class NullStringAdapter<TData> : StringAdapter<Nullable<TData>>, IStringAdapter<Nullable<TData>>
+  internal class NullStringAdapter<TData>: StringAdapter<Nullable<TData>>, IStringAdapter<Nullable<TData>>
     where TData : struct
   {
     /// <summary>
