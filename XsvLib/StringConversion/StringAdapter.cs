@@ -16,7 +16,7 @@ namespace XsvLib.StringConversion
   /// Defines the logic for converting the given type to or from a string,
   /// including specific formatting rules.
   /// </summary>
-  public abstract class StringAdapter<TData>
+  public abstract class StringAdapter<TData>  : IStringAdapter<TData>
   {
     /// <summary>
     /// Create a new StringAdapter

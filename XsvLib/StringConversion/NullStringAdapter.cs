@@ -16,7 +16,12 @@ namespace XsvLib.StringConversion
   /// into a string adapter for the corresponding nullable type,
   /// treating a specific marker string (default: empty string) as NULL value
   /// </summary>
-  public class NullStringAdapter<TData> : StringAdapter<TData?>
+  /// <remarks>
+  /// Nullable{T} has a strange position in the type system and type tests against
+  /// "T?" sometimes behave different than the same tests against "Nullable{T}" 
+  /// </remarks>
+  internal class NullStringAdapter<TData> : StringAdapter<Nullable<TData>>, IStringAdapter<Nullable<TData>>
+    where TData : struct
   {
     /// <summary>
     /// Create a new BlankStringAdapter
@@ -28,7 +33,7 @@ namespace XsvLib.StringConversion
     /// The string to treat as equivalent of a null data value
     /// </param>
     public NullStringAdapter(
-      StringAdapter<TData> baseAdapter,
+      IStringAdapter<TData> baseAdapter,
       string nullMarker = "")
     {
       BaseAdapter = baseAdapter;
@@ -38,7 +43,7 @@ namespace XsvLib.StringConversion
     /// <summary>
     /// The underlying non-nullable type adapter
     /// </summary>
-    public StringAdapter<TData> BaseAdapter { get; }
+    public IStringAdapter<TData> BaseAdapter { get; }
 
     /// <summary>
     /// The string representing null data values
@@ -68,7 +73,8 @@ namespace XsvLib.StringConversion
     /// </summary>
     public override string StringValue(TData? value)
     {
-      return value == null ? NullMarker : BaseAdapter.StringValue(value);
+      Nullable<TData> x = value;
+      return !x.HasValue ? NullMarker : BaseAdapter.StringValue(x.Value);
     }
   }
 }

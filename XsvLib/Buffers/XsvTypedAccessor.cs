@@ -24,7 +24,7 @@ namespace XsvLib.Buffers
     /// </summary>
     public XsvTypedAccessor(
       XsvColumnAccessor stringAccessor,
-      StringAdapter<T> adapter)
+      IStringAdapter<T> adapter)
     {
       Accessor = stringAccessor;
       Adapter = adapter;
@@ -39,7 +39,7 @@ namespace XsvLib.Buffers
     /// The adapter converting bidirectionally between the raw string value
     /// and the typed equivalent
     /// </summary>
-    public StringAdapter<T> Adapter { get; }
+    public IStringAdapter<T> Adapter { get; }
 
     /// <summary>
     /// Get or set the typed value for the XsvBuffer column

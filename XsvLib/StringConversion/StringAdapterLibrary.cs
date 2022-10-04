@@ -33,14 +33,14 @@ namespace XsvLib.StringConversion
     /// Return the registered string adapter for the given type and name, if it exists
     /// (null otherwise)
     /// </summary>
-    public StringAdapter<TData>? Find<TData>(string name = "")
+    public IStringAdapter<TData>? Find<TData>(string name = "")
     {
       var type = typeof(TData);
       if(_adapters.TryGetValue(type, out var innerMap))
       {
         if(innerMap.TryGetValue(name, out var adapter))
         {
-          return (StringAdapter<TData>)(adapter!);
+          return (IStringAdapter<TData>)(adapter!);
         }
       }
       return null;
@@ -63,7 +63,7 @@ namespace XsvLib.StringConversion
     /// <exception cref="KeyNotFoundException">
     /// When no matching adapter has been registered
     /// </exception>
-    public StringAdapter<TData> Get<TData>(string name = "")
+    public IStringAdapter<TData> Get<TData>(string name = "")
     {
       var adapter = Find<TData>(name);
       if(adapter == null)
@@ -79,7 +79,8 @@ namespace XsvLib.StringConversion
 
     /// <summary>
     /// Register the adapter for the given type and each of the given names
-    /// (possibly overwriting existing adapters)
+    /// (possibly overwriting existing adapters).
+    /// Does not work as expected for nullable types!
     /// </summary>
     /// <typeparam name="TData">
     /// The type the stringadapter converts
@@ -94,13 +95,33 @@ namespace XsvLib.StringConversion
     /// <returns>
     /// This StringAdapterLibrary itself.
     /// </returns>
-    public StringAdapterLibrary Register<TData>(StringAdapter<TData> adapter, params string[] names)
+    public StringAdapterLibrary Register<TData>(IStringAdapter<TData> adapter, params string[] names)
+    {
+      var type = typeof(TData); // DOES NOT WORK AS EXPECTED FOR Nullable<X> (it returns X instead of Nullable<X>)
+      return RegisterRaw(type, adapter, names);
+    }
+
+    /// <summary>
+    /// Low level register operation (type unsafe). 
+    /// </summary>
+    /// <param name="type">
+    /// The data type of the converter
+    /// </param>
+    /// <param name="adapter">
+    /// The converter instance, which must implement StringAdapter{type}
+    /// </param>
+    /// <param name="names">
+    /// The adapter names to register (empty is equivalent to registering just "")
+    /// </param>
+    /// <returns>
+    /// This library itself
+    /// </returns>
+    internal StringAdapterLibrary RegisterRaw(Type type, object adapter, params string[] names)
     {
       if(names.Length == 0)
       {
         names = new[] { "" };
       }
-      var type = typeof(TData);
       if(!_adapters.TryGetValue(type, out var innerMap))
       {
         innerMap = new Dictionary<string, object>(StringComparer.InvariantCultureIgnoreCase);
@@ -111,6 +132,39 @@ namespace XsvLib.StringConversion
         innerMap[name] = adapter;
       }
       return this;
+    }
+
+    /// <summary>
+    /// Register a string converter for converting nullable instances of type T, using the
+    /// given 'nullValue' as string representation of nulls.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The base type to convert. A converter for this type with the given name must have been 
+    /// registered already.
+    /// </typeparam>
+    /// <param name="nullValue">
+    /// Default "". The string representing null values.
+    /// </param>
+    /// <param name="name">
+    /// Default "". The name of the converter.
+    /// This is the name for the nullable wrapper converter registered by this call.
+    /// If <paramref name="sourceName"/> is null, this is also the name of the existing
+    /// converter being wrapped.
+    /// </param>
+    /// <param name="sourceName">
+    /// Default null. If not null: the name of the existing non-nullable converter that is being
+    /// wrapped. If null, <paramref name="name"/> is used instead.
+    /// </param>
+    /// <returns>
+    /// This StringAdapterLibrary itself.
+    /// </returns>
+    public StringAdapterLibrary RegisterNullable<T>(string nullValue = "", string name = "", string? sourceName = null)
+      where T: struct
+    {
+      var cvt = Get<T>(sourceName ?? name);
+      var cvt2 = new NullStringAdapter<T>(cvt, nullValue);
+      var type = typeof(Nullable<T>);
+      return RegisterRaw(type, cvt2, name);
     }
 
     /// <summary>
@@ -227,36 +281,6 @@ namespace XsvLib.StringConversion
     }
 
     /// <summary>
-    /// Register a string converter for converting nullable instances of type T, using the
-    /// given 'nullValue' as string representation of nulls.
-    /// </summary>
-    /// <typeparam name="T">
-    /// The base type to convert. A converter for this type with the given name must have been 
-    /// registered already.
-    /// </typeparam>
-    /// <param name="nullValue">
-    /// Default "". The string representing null values.
-    /// </param>
-    /// <param name="name">
-    /// Default "". The name of the converter.
-    /// This is the name for the nullable wrapper converter registered by this call.
-    /// If <paramref name="sourceName"/> is null, this is also the name of the existing
-    /// converter being wrapped.
-    /// </param>
-    /// <param name="sourceName">
-    /// Default null. If not null: the name of the existing non-nullable converter that is being
-    /// wrapped. If null, <paramref name="name"/> is used instead.
-    /// </param>
-    /// <returns>
-    /// This StringAdapterLibrary itself.
-    /// </returns>
-    public StringAdapterLibrary RegisterNullable<T>(string nullValue = "", string name = "", string? sourceName = null)
-    {
-      var cvt = Get<T>(sourceName ?? name);
-      return Register(new NullStringAdapter<T>(cvt, nullValue), name);
-    }
-
-    /// <summary>
     /// Register a integer - string converter, using standard decimal integer notation.
     /// </summary>
     /// <param name="name">
@@ -307,7 +331,7 @@ namespace XsvLib.StringConversion
     /// </returns>
     public StringAdapterLibrary RegisterBool(string falseValue="false", string trueValue="true", string name = "")
     {
-      return Register(new BoolStringAdapter(), falseValue, trueValue, name);
+      return Register(new BoolStringAdapter(falseValue, trueValue), name);
     }
 
     /// <summary>
