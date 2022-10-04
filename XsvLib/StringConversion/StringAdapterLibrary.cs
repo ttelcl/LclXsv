@@ -114,7 +114,9 @@ namespace XsvLib.StringConversion
     }
 
     /// <summary>
-    /// Register one or more aliases for a converter
+    /// Register one or more aliases for a converter.
+    /// Not passing any <paramref name="names"/> aliases the converter indicated by 
+    /// <paramref name="originalName"/> as the new default.
     /// </summary>
     /// <typeparam name="TData">
     /// The data type of the converter to alias
@@ -123,7 +125,9 @@ namespace XsvLib.StringConversion
     /// The existing name of the stringadapter to alias. Use "" to alias the default converter for TData
     /// </param>
     /// <param name="names">
-    /// The alias name(s)
+    /// The alias name(s). Not providing any acts as if you passed a single ""; In other words:
+    /// doing so aliases the converter identified by <paramref name="originalName"/> to the
+    /// name "", i.e. replaces the default converter.
     /// </param>
     /// <returns>
     /// This StringAdapterLibrary itself.
@@ -144,7 +148,7 @@ namespace XsvLib.StringConversion
     /// values are represented by blank strings
     /// </param>
     /// <returns>
-    /// This library itself, enabling chaining of more registrations
+    /// This library itself, enabling fluent chaining of more registrations
     /// </returns>
     public StringAdapterLibrary RegisterStandard(bool includeNullable = true)
     {
@@ -159,6 +163,97 @@ namespace XsvLib.StringConversion
         RegisterNullable<bool>();
       }
       return this;
+    }
+
+    /// <summary>
+    /// Register "roundtrip" format adapters for DateTime and DateTimeOffset,
+    /// and optionally also for their nullable counterparts
+    /// </summary>
+    /// <param name="adapterName">
+    /// The name used for all the adapters being registered
+    /// </param>
+    /// <param name="includeNullable">
+    /// Default true. When true, also adapters for DateTimeOffset? and DateTime? are
+    /// registered.
+    /// </param>
+    /// <returns>
+    /// This library itself, enabling fluent chaining of more registrations
+    /// </returns>
+    public StringAdapterLibrary RegisterTimestampsRoundtrip(string adapterName, bool includeNullable = true)
+    {
+      RegisterDateTimeOffsetRoundtrip(adapterName);
+      RegisterDateTimeRoundtrip(adapterName);
+      if(includeNullable)
+      {
+        RegisterNullable<DateTimeOffset>(name: adapterName, sourceName: adapterName);
+        RegisterNullable<DateTime>(name: adapterName, sourceName: adapterName);
+      }
+      return this;
+    }
+
+    /// <summary>
+    /// Register "epoch" format adapters for DateTime and DateTimeOffset,
+    /// and optionally also for their nullable counterparts.
+    /// These converters represent timestamps as integer time units since
+    /// midnight 1970-01-01. The time unit defaults to seconds, but can
+    /// be changed by passing a different <paramref name="ticksPerUnit"/> value.
+    /// </summary>
+    /// <param name="adapterName">
+    /// The name used for all the adapters being registered
+    /// </param>
+    /// <param name="ticksPerUnit">
+    /// Default TimeSpan.TicksPerSecond. The number of "ticks" per time unit.
+    /// The usual choice is between TimeSpan.TicksPerSecond (default) and
+    /// TimeSpan.TicksPerMillisecond.
+    /// </param>
+    /// <param name="includeNullable">
+    /// Default true. When true, also adapters for DateTimeOffset? and DateTime? are
+    /// registered.
+    /// </param>
+    /// <returns>
+    /// This library itself, enabling fluent chaining of more registrations
+    /// </returns>
+    public StringAdapterLibrary RegisterTimestampsEpoch(
+      string adapterName, long ticksPerUnit = TimeSpan.TicksPerSecond, bool includeNullable = true)
+    {
+      RegisterDateTimeOffsetEpoch(adapterName, ticksPerUnit);
+      RegisterDateTimeEpoch(adapterName, ticksPerUnit);
+      if(includeNullable)
+      {
+        RegisterNullable<DateTimeOffset>(name: adapterName, sourceName: adapterName);
+        RegisterNullable<DateTime>(name: adapterName, sourceName: adapterName);
+      }
+      return this;
+    }
+
+    /// <summary>
+    /// Register a string converter for converting nullable instances of type T, using the
+    /// given 'nullValue' as string representation of nulls.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The base type to convert. A converter for this type with the given name must have been 
+    /// registered already.
+    /// </typeparam>
+    /// <param name="nullValue">
+    /// Default "". The string representing null values.
+    /// </param>
+    /// <param name="name">
+    /// Default "". The name of the converter.
+    /// This is the name for the nullable wrapper converter registered by this call.
+    /// If <paramref name="sourceName"/> is null, this is also the name of the existing
+    /// converter being wrapped.
+    /// </param>
+    /// <param name="sourceName">
+    /// Default null. If not null: the name of the existing non-nullable converter that is being
+    /// wrapped. If null, <paramref name="name"/> is used instead.
+    /// </param>
+    /// <returns>
+    /// This StringAdapterLibrary itself.
+    /// </returns>
+    public StringAdapterLibrary RegisterNullable<T>(string nullValue = "", string name = "", string? sourceName = null)
+    {
+      var cvt = Get<T>(sourceName ?? name);
+      return Register(new NullStringAdapter<T>(cvt, nullValue), name);
     }
 
     /// <summary>
@@ -231,27 +326,86 @@ namespace XsvLib.StringConversion
     }
 
     /// <summary>
-    /// Register a string converter for converting nullable instances of type T, using the
-    /// given 'nullValue' as string representation of nulls.
+    /// Register a string converter for DateTimeOffset values with the specified
+    /// converter name. The converter uses "roundtrip" style serialization and
+    /// deserialization.
     /// </summary>
-    /// <typeparam name="T">
-    /// The base type to convert. A converter for this type with the given name must have been 
-    /// registered already.
-    /// </typeparam>
-    /// <param name="nullValue">
-    /// Default "". The string representing null values.
-    /// </param>
     /// <param name="name">
-    /// Default "". The name of the converter. This is both the name for the base converter
-    /// as well as the nullable wrapper converter registered by this call.
+    /// The name of the converter. Exceptionally, this does not default to "", since
+    /// there is no general answer to the question "what is the default string
+    /// representation for time stamps" (it depends on the application).
     /// </param>
     /// <returns>
-    /// This StringAdapterLibrary itself.
+    /// This string converter library itself
     /// </returns>
-    public StringAdapterLibrary RegisterNullable<T>(string nullValue = "", string name="")
+    public StringAdapterLibrary RegisterDateTimeOffsetRoundtrip(string name)
     {
-      var cvt = Get<T>(name);
-      return Register(new NullStringAdapter<T>(cvt, nullValue), name);
+      return Register(new DtoRoundtripStringAdapter(), name);
+    }
+
+    /// <summary>
+    /// Register a string converter for DateTime values with the specified
+    /// converter name. The converter uses "roundtrip" style serialization and
+    /// deserialization.
+    /// </summary>
+    /// <param name="name">
+    /// The name of the converter. Exceptionally, this does not default to "", since
+    /// there is no general answer to the question "what is the default string
+    /// representation for time stamps" (it depends on the application).
+    /// </param>
+    /// <returns>
+    /// This string converter library itself
+    /// </returns>
+    public StringAdapterLibrary RegisterDateTimeRoundtrip(string name)
+    {
+      return Register(new DateTimeRoundtripStringAdapter(), name);
+    }
+
+    /// <summary>
+    /// Register a string converter for DateTimeOffset values with the specified
+    /// converter name. The converter uses "epoch" style serialization and
+    /// deserialization, converting between time stamps and integers representing
+    /// the number of time units since midnight 1970-01-01 UTC
+    /// </summary>
+    /// <param name="name">
+    /// The name of the converter. Exceptionally, this does not default to "", since
+    /// there is no general answer to the question "what is the default string
+    /// representation for time stamps" (it depends on the application).
+    /// </param>
+    /// <param name="ticksPerUnit">
+    /// Default TimeSpan.TicksPerSecond. The number of "ticks" per time unit.
+    /// The usual choice is between TimeSpan.TicksPerSecond (default) and
+    /// TimeSpan.TicksPerMillisecond.
+    /// </param>
+    /// <returns>
+    /// This string converter library itself
+    /// </returns>
+    public StringAdapterLibrary RegisterDateTimeOffsetEpoch(string name, long ticksPerUnit=TimeSpan.TicksPerSecond)
+    {
+      return Register(new DtoEpochStringAdapter(ticksPerUnit), name);
+    }
+
+    /// <summary>
+    /// Register a string converter for DateTime values with the specified
+    /// converter name. The converter uses "roundtrip" style serialization and
+    /// deserialization.
+    /// </summary>
+    /// <param name="name">
+    /// The name of the converter. Exceptionally, this does not default to "", since
+    /// there is no general answer to the question "what is the default string
+    /// representation for time stamps" (it depends on the application).
+    /// </param>
+    /// <param name="ticksPerUnit">
+    /// Default TimeSpan.TicksPerSecond. The number of "ticks" per time unit.
+    /// The usual choice is between TimeSpan.TicksPerSecond (default) and
+    /// TimeSpan.TicksPerMillisecond.
+    /// </param>
+    /// <returns>
+    /// This string converter library itself
+    /// </returns>
+    public StringAdapterLibrary RegisterDateTimeEpoch(string name, long ticksPerUnit = TimeSpan.TicksPerSecond)
+    {
+      return Register(new DateTimeEpochStringAdapter(ticksPerUnit), name);
     }
 
   }
