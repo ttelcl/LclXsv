@@ -386,6 +386,25 @@ namespace XsvLib.StringConversion
     }
 
     /// <summary>
+    /// Register a StringAdapter for <see cref="DateTime"/>, converting UTC stamps
+    /// to ISO date time format in seconds precision (suffixed with "Z")
+    /// </summary>
+    /// <param name="name">
+    /// The name to use for the converter
+    /// </param>
+    /// <param name="includeSuffix">
+    /// When true, a "Z" suffix is generated when converting to a string.
+    /// That suffix is always allowed on parsing.
+    /// </param>
+    /// <returns>
+    /// This same StringAdpterLibrary (for fluent call chains)
+    /// </returns>
+    public StringAdapterLibrary RegisterDateTimeIsoSeconds(string name, bool includeSuffix)
+    {
+      return Register(new DateTimeIsoSecondsStringAdapter(includeSuffix), name);
+    }
+
+    /// <summary>
     /// Register a string converter for DateTimeOffset values with the specified
     /// converter name. The converter uses "epoch" style serialization and
     /// deserialization, converting between time stamps and integers representing

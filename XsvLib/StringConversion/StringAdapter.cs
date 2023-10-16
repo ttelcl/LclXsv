@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,8 +26,6 @@ namespace XsvLib.StringConversion
     {
     }
 
-    // *********** [MaybeNullWhen] is not supported in .net standard 2.0 ***********
-    // causing a problem when implementing TryParse-like methods
     ///// <summary>
     ///// Try to parse the string
     ///// </summary>
@@ -39,7 +38,7 @@ namespace XsvLib.StringConversion
     ///// <returns>
     ///// True on success, false on failure
     ///// </returns>
-    //public abstract bool TryParse(string s, /*[MaybeNullWhen(returnValue: false)]*/ out TData value);
+    //public abstract bool TryParse(string s, [MaybeNullWhen(returnValue: false)] out TData value);
 
     /// <summary>
     /// Parse a string to a TData instance
