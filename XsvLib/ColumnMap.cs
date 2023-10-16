@@ -59,7 +59,7 @@ namespace XsvLib
           throw new InvalidOperationException(
             $"This ColumnMap has been locked for new column creation");
         }
-        if(_columns.TryGetValue(name, out MappedColumn result))
+        if(_columns.TryGetValue(name, out var result))
         {
           if(create && !optional)
           {
