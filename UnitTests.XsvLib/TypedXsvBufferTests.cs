@@ -38,6 +38,30 @@ namespace UnitTests.XsvLib
       Assert.NotNull(lib.Find<string>(""));
       Assert.NotNull(lib.Find<int>(""));
       Assert.NotNull(lib.Find<int?>(""));
+    }
+
+    [Fact]
+    public void StringAdapterDateTimeIsoTest()
+    {
+      var lib = 
+        new StringAdapterLibrary()
+        .RegisterDateTimeIsoSeconds("isosecZ", true)
+        .RegisterDateTimeIsoSeconds("isosec", false);
+
+      var converterZ = lib.Find<DateTime>("isosecZ");
+      Assert.NotNull(converterZ);
+      var t = new DateTime(2023, 10, 16, 1, 2, 3, DateTimeKind.Utc);
+      var s = converterZ!.StringValue(t);
+      Assert.Equal("2023-10-16T01:02:03Z", s);
+      var t2 = converterZ!.ParseString(s);
+      Assert.Equal(t, t2);
+
+      var converterNoZ = lib.Find<DateTime>("isosec");
+      Assert.NotNull(converterNoZ);
+      var s2 = converterNoZ!.StringValue(t);
+      Assert.Equal("2023-10-16T01:02:03", s2);
+      var t2b = converterNoZ!.ParseString(s2);
+      Assert.Equal(t, t2b);
 
     }
 
