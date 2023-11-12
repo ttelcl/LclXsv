@@ -14,7 +14,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <VersionPrefix>2.0.1</VersionPrefix>
-    <AssemblyName>Lcl.$(MSBuildProjectName)</AssemblyName>
+    <AssemblyName>TteLcl.$(MSBuildProjectName)</AssemblyName>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>  
   </PropertyGroup>
 
